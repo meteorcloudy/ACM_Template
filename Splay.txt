@@ -1,0 +1,270 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+using namespace std;
+
+const int N=100005;
+
+typedef long long LL;
+
+#define LL(x) (ch[x][0])
+#define RR(x) (ch[x][1])
+#define MID(a,b) (a+((b-a)>>1))
+#define KT (LL(RR(Rt)))
+#define INF 0x3f3f3f3f
+
+struct SplayTree
+{
+    int Rt,top1,top2;
+    int sz[N],pre[N],ch[N][2],stk[N],que[N];
+
+    int flip[N];
+	LL key[N],sum[N],add[N];
+
+	void iswap(int x)
+	{
+		flip[x]^=1;
+		swap(LL(x),RR(x));
+	}
+	void fun(int x,LL valu)
+	{
+		key[x]+=valu; add[x]+=valu;
+		sum[x]+=sz[x]*valu;
+	}
+	
+    void PushUp(int x)
+	{
+		sz[x]=1+sz[LL(x)]+sz[RR(x)];
+
+		if(flip[x])
+		{
+			iswap(LL(x));
+			iswap(RR(x));
+			flip[x]=0;
+		}
+		if(add[x])
+		{
+			fun(LL(x),add[x]);
+			fun(RR(x),add[x]);
+			add[x]=0;
+		}
+		
+		
+	}
+	void PushDown(int x) { } 
+	void Link(int x,int y,int f)
+	{
+		pre[x]=y; ch[y][f]=x;
+	}
+	void Rotate(int x,int f)
+	{
+		int y=pre[x],z=pre[y];
+
+		PushDown(y); PushDown(x);
+
+		Link(ch[x][f],y,!f);
+		Link(x,z,RR(z)==y);
+		Link(y,x,f);
+
+		PushUp(y);
+	}
+	void Splay(int x,int goal)
+	{
+		while(pre[x]!=goal)
+		{
+			int y=pre[x],z=pre[y];
+			int cx=(LL(y)==x),cy=(LL(z)==y);
+			if(z==goal) Rotate(x,cx);
+			else
+			{
+				if(cx==cy) Rotate(y,cy);
+				else Rotate(x,cx);
+				Rotate(x,cy);
+			}
+		}
+		PushUp(x);
+		if(goal==0) Rt=x;
+	}
+	void Select(int K,int goal)
+	{
+		int x=Rt;
+		PushDown(x);
+		while(1)
+		{
+			if(K<=sz[LL(x)]) x=LL(x);
+			else if(K<=sz[LL(x)]+1) break;
+			else K-=sz[LL(x)]+1,x=RR(x);
+			PushDown(x);
+		}
+		Splay(x,goal);
+	}
+	void Erase(int x)//删除以x为根的子树  
+    {  
+        int father=pre[x];  
+        int head=0,tail=0;  
+        for(que[tail++]=x;head<tail;head++)  
+        {  
+            stk[top2++]=que[head];  
+            if(LL(que[head])) que[tail++]=LL(que[head]);  
+            if(RR(que[head])) que[tail++]=RR(que[head]);  
+        }  
+        ch[father][ RR(father)==x ]=0;  
+    }  
+	int Join(int r1,int r2)  
+    {  
+        if(!r1)  
+        {  
+            if(!r2) return 0;  
+            pre[r2]=0;  
+            return r2;  
+        }  
+  
+        int x=r1;  
+        while(RR(x)) x=RR(x);  
+        Splay(x,Rt);  
+  
+        Link(r2,x,1);  
+        Rt=x;   pre[x]=0;  
+        PushUp(x);  
+  
+        return x;  
+    }  
+	
+
+	void Insert()//插入一段区间  
+    {  
+        int pos,tot;  
+        scanf("%d%d",&pos,&tot);  
+  
+        for(int i=1;i<=tot;i++) scanf("%d",&a[i]);  
+  
+        Select(pos,0), Select(pos+1,Rt);  
+        build(1,tot,Kt,ch[Rt][1]);  
+        Splay(ch[Rt][1],0);  
+    }  
+	void Insert()  //插入的点可以在根节点和根结点的右儿子之间
+    {  
+        int valu; scanf("%d",&valu);  
+  
+        int x=++top;  
+        sz[x]=1; pre[x]=0; LL(x)=RR(x)=0;  
+        key[x]=valu; sum[x]=0; mx[x]=-INF;  
+        if(pos==0)  
+        {  
+            Link(Rt,x,1);  
+            Rt=x; PushUp(Rt);  
+        }  
+        else  
+        {  
+            Select(pos,0);  
+  
+            int tmp=RR(Rt);  
+            Link(x,Rt,1); Link(tmp,x,1);  
+            PushUp(x); PushUp(Rt);  
+        }  
+        pos++;  
+    }
+	
+    void Delete()//删除一段区间  
+    {  
+        int pos,tot;  
+        scanf("%d%d",&pos,&tot);  
+  
+        Select(pos-1,0), Select(pos+tot,Rt);  
+  
+        Erase(Kt);  
+  
+        Splay(ch[Rt][1],0);  
+    }  
+	void Delete()  //删除点的另一种姿势
+    {  
+        if(pos==0) return;  
+  
+        Select(pos,0);  
+        Rt=Join(LL(Rt),RR(Rt));  
+        if(Rt) PushUp(Rt);  
+        pos--;  
+    }  
+	
+	
+	
+	void Flip(int a,int b)
+	{
+		Select(a-1,0); Select(b+1,Rt);
+
+		iswap(KT);
+	}
+	void Cut(int a,int b,int c)
+	{
+		Select(a-1,0); Select(b+1,Rt);
+
+		int save=KT;
+		KT=0;	pre[save]=0;
+		PushUp(RR(Rt)); PushUp(Rt);
+
+		Select(c,0); Select(c+1,Rt);
+
+		Link(save,ch[Rt][1],0);
+		PushUp(RR(Rt)); PushUp(Rt);
+	}
+	
+	
+
+    void addNode(int valu,int &x,int y)
+    {
+		if(top2) x=stk[--top2];  
+        else x=++top1;  
+        
+		pre[x]=y;	sz[x]=1;    LL(x)=RR(x)=0;
+
+        key[x]=valu; sum[x]=0; add[x]=0;
+    }
+	void insert(int valu)
+    {
+        int x=Rt;
+        while(ch[x][ valu>key[x] ])
+        {
+            x=ch[x][ valu>key[x] ];
+        }
+        addNode(valu,ch[x][valu>key[x]],x);
+        Splay(ch[x][valu>key[x]],0);
+    }
+    void build(int lft,int rht,int &x,int y)
+    {
+        if(lft>rht) return;
+
+        int mid=MID(lft,rht);
+
+        addNode(A[mid],x,y);
+        build(lft,mid-1,LL(x),x);
+        build(mid+1,rht,RR(x),x);
+
+        PushUp(x);
+    }
+    void init(int n)
+    {
+        Rt=top1=top2=0;
+        sz[0]=pre[0]=LL(0)=RR(0)=0;
+
+        addNode(0,Rt,0);
+        addNode(0,RR(Rt),Rt);
+
+        //build(1,n,LL(RR(Rt)),RR(Rt));
+
+        PushUp(RR(Rt)); PushUp(Rt);
+    }
+
+    void debug(){ printf("Rt:%d\n",Rt); travel(Rt); }
+	void travel(int x)
+	{
+		if(x==0) return;
+		travel(LL(x));
+		printf("node:%d,pre:%d,sz:%d,lson:%d,rson:%d,key:%lld,sum:%lld\n",
+				x,pre[x],sz[x],LL(x),RR(x),key[x],sum[x]);
+		travel(RR(x));
+	}
+}spt;
+int main()
+{
+	return 0;
+}

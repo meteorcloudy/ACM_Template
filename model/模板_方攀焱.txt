@@ -1,0 +1,621 @@
+//二分匹配
+#include<iostream>
+#include<cstdlib>
+#include<cstdio>
+#include<cstring>
+#include<algorithm>
+#include<cmath>
+using namespace std;
+bool map[201][201], vis[201] ;    //map保存两点间是否有边，vis保存每次操作后该数是否操作过
+int link[201] ;                    //link保存改点连接的另一点的序号
+int m , n ;
+bool find ( int k ) 
+{//对k寻找匹配，如果找到就记录匹配，并返回true,否则返回false
+ int i , j ;
+ for ( i = 1 ; i <= n ; i ++ )
+ {//对所有节点遍历一遍，寻找没有访问过并且与i连同的点
+     if ( map [k][i] ==true && ! vis[i] )
+     {
+         vis [i] = true ;    //记录改点以被访问
+         if ( link [i] == 0 || find ( link [i] ) )
+         {//如果该点还未与其他点匹配，或还能找到其他点能与该点匹配的点j进行匹配，即存在增广路
+             link [ i ] = k ;    //将i与k进行匹配
+             return true;
+         }
+     }
+ }
+ return false;
+}
+int main()
+{
+ while ( cin >> m >> n ) 
+ {//初始化，接受数据的输入
+     memset ( map , false , sizeof ( map ) ) ;
+     memset ( link , 0 , sizeof ( link ) ) ;
+     int i , j ;
+     for ( i = 1 ; i <= m ; i ++ )
+     {
+         int s ;
+         cin >> s ;
+         for ( j = 0 ; j < s ; j ++ )
+         {
+             int k ;
+             cin >> k ;
+             map [i][k] = true ;
+         }
+     }
+     int ans = 0 ;    //最大匹配数
+     for ( i = 1 ; i <= m ; i ++ )
+     {
+         memset ( vis , false , sizeof ( vis ) ) ;//对所有数据都初始为0，表明数据还没有试探
+         if ( find ( i ) ) //如果对i找到一个匹配
+             ans ++ ;
+     }
+     cout<<ans<<endl;
+ }
+ return 0;
+}
+
+//最大流
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <map>
+#include <set>
+#include <list>
+
+#define INT_INF 0x3fffffff
+#define LL_INF 0x3fffffffffffffff
+#define EPS 1e-12
+#define MOD 1000000007
+#define PI 3.141592653579798
+#define N 50005
+#define E 1000000
+
+using namespace std;
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+map<int,int>I;
+struct Edge
+{
+    int en,cap,flow,next;
+} edge[E];
+int head[N] , tot , now[N];
+int source,sink,tot_num;
+int pre[N] , dis[N] , gap[N];
+
+void add_edge(int st,int en,int cap)
+{
+    edge[tot].en=en;
+    edge[tot].cap=cap;
+    edge[tot].flow=0;
+    edge[tot].next=head[st];
+    head[st]=tot++;
+
+    edge[tot].en=st;
+    edge[tot].cap=0;
+    edge[tot].flow=0;
+    edge[tot].next=head[en];
+    head[en]=tot++;
+}
+
+void augment(int flow)
+{
+    for(int i=source;i!=sink;i=edge[now[i]].en)
+    {
+        edge[now[i]].flow+=flow;
+        edge[now[i]^1].flow-=flow;
+    }
+}
+
+int sap()
+{
+    memset(dis,0,sizeof(dis));
+    memset(gap,0,sizeof(gap));
+    memset(pre,-1,sizeof(pre));
+    for(int i=0;i<tot_num;i++)
+        now[i]=head[i];
+    gap[0]=tot_num;
+    int point=source,flow=0,min_flow=INT_INF;
+    while(dis[source]<tot_num)
+    {
+        bool fg=false;
+        for(int i=now[point];i!=-1;i=edge[i].next)
+            if(edge[i].cap-edge[i].flow>0 && dis[point]==dis[edge[i].en]+1)
+            {
+                min_flow=min(min_flow,edge[i].cap-edge[i].flow);
+                now[point]=i;
+                pre[edge[i].en]=point;
+                point=edge[i].en;
+                if(point==sink)
+                {
+                    flow+=min_flow;
+                    augment(min_flow);
+                    point=source;
+                    min_flow=INT_INF;
+                }
+                fg=true;
+                break;
+            }
+        if(fg) continue;
+        if(--gap[dis[point]]==0) break;
+        int Min=tot_num;
+        for(int i=head[point];i!=-1;i=edge[i].next)
+            if(edge[i].cap-edge[i].flow>0 && Min>dis[edge[i].en])
+            {
+                Min=dis[edge[i].en];
+                now[point]=i;
+            }
+        gap[dis[point]=Min+1]++;
+        if(point!=source) point=pre[point];
+    }
+    return flow;
+}
+
+void build(int n)
+{
+    memset(head,-1,sizeof(head));
+    tot=0;
+    source=0; sink=500; tot_num=n+2;
+    int a,b,c;
+    for(int i=1;i<=n;i++)
+    {
+        scanf("%d%d%d",&a,&b,&c);
+        for(int j=1;j<=a;j++)
+        {
+          scanf("%d",&c);
+          if(I[c]==0)
+          {
+            I[c]=I.size();
+            add_edge(I[c],sink,1);
+          //  add_edge(sink,I[c],1);
+          }
+          add_edge(i,I[c],1);
+     //     add_edge(I[c],i,1);
+        }
+        add_edge(source,i,c);
+     //   add_edge(i,source,c);
+    }
+}
+
+int main()
+{
+    int n,m;
+    while(scanf("%d%d",&n)!=EOF)
+    {
+        build(n);
+        int ans=sap();
+        printf("%d\n",ans);
+    }
+    return 0;
+}
+
+
+//最大流最小费用
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <string>
+#include <queue>
+#include <stack>
+#include <map>
+#include <set>
+#include <list>
+
+#define INT_INF 0x3fffffff
+#define LL_INF 0x3fffffffffffffff
+#define EPS 1e-12
+#define MOD 1000000007
+#define PI 3.141592653579798
+#define N 50005
+#define E 1000000
+
+using namespace std;
+
+typedef long long LL;
+typedef unsigned long long ULL;
+typedef double DB;
+
+struct Edge
+{
+    int st,en,cap,flow,cost,next;
+} edge[E];
+int head[N] , tot , now[N];
+int source,sink;
+int pre[N] , dis[N];
+queue<int> q;
+bool vs[N];
+
+void add_edge(int st,int en,int cap,int cost)
+{
+    edge[tot].st=st;
+    edge[tot].en=en;
+    edge[tot].cap=cap;
+    edge[tot].flow=0;
+    edge[tot].cost=cost;
+    edge[tot].next=head[st];
+    head[st]=tot++;
+
+    edge[tot].st=en;
+    edge[tot].en=st;
+    edge[tot].cap=0;
+    edge[tot].flow=0;
+    edge[tot].cost=-cost;
+    edge[tot].next=head[en];
+    head[en]=tot++;
+}
+
+bool SPFA()
+{
+    for(int i=0; i<N; i++)
+        dis[i]=INT_INF;
+    memset(vs,0,sizeof(vs));
+    memset(now,-1,sizeof(now));
+    while(!q.empty()) q.pop();
+    q.push(source); dis[source]=0; vs[source]=1;
+    while(!q.empty())
+    {
+        int u=q.front(); q.pop(); vs[u]=0;
+        for(int i=head[u],v; i!=-1; i=edge[i].next)
+            if(edge[i].cap-edge[i].flow>0 && dis[v=edge[i].en]>dis[u]+edge[i].cost)
+            {
+                dis[v]=dis[u]+edge[i].cost;
+                now[v]=i;
+                if(!vs[v])
+                {
+                    vs[v]=1;
+                    q.push(v);
+                }
+            }
+    }
+    if(dis[sink]!=INT_INF) return true;
+    else return false;
+}
+
+int MCMF()
+{
+    int cost=0;
+    while(SPFA())
+    {
+        int flow=INT_INF;
+        for(int u=sink; u!=source; u=edge[now[u]].st)
+            if(flow>edge[now[u]].cap-edge[now[u]].flow)
+                flow=edge[now[u]].cap-edge[now[u]].flow;
+        for(int u=sink; u!=source; u=edge[now[u]].st)
+        {
+            edge[now[u]].flow+=flow;
+            edge[now[u]^1].flow-=flow;
+        }
+        cost+=flow*dis[sink];
+    }
+    return cost;
+}
+
+void build(int n,int m)
+{
+    memset(head,-1,sizeof(head));
+    tot=0;
+    source=1; sink=n;
+    for(int i=1,a,b,c,d;i<=m;i++)
+    {
+        scanf("%d%d%d%d",&a,&b,&c,&d);
+        add_edge(a,b,c,d);
+    }
+}
+
+int main()
+{
+    int n,m;
+    while(scanf("%d%d",&n,&m)!=EOF)
+    {
+        build(n,m);
+        int ans=MCMF();
+        printf("%d\n",ans);
+    }
+    return 0;
+}
+
+
+//计算几何
+//Geometry
+//Util
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include <cmath>
+#include <vector>
+#include <algorithm>
+#include <queue>
+#include <iostream>
+
+using namespace std;
+
+const int MAX = 1200;
+const double oo = 1e100;
+const double eps = 1e-8;
+const double PI = acos(-1.0);
+
+const int LEFT = 0;
+const int RIGHT = 1;
+const int ONLINE = 2;
+
+int sgn(double x)
+{
+    return x < -eps ? -1 : x > eps;
+}
+
+int dbcmp(double x, double y)
+{
+    return sgn(x - y);
+}
+
+double sqr(double x)
+{
+    return x * x;
+}
+
+bool is_int(double x)
+{
+    return sgn(x - floor(x + eps)) == 0;
+}
+
+double fix(double x)
+{
+    if (sgn(x)) return x;
+    else return 0;
+}
+
+
+struct Point
+{
+    double x, y;
+    int id;
+    Point()
+    {
+    }
+    Point(double x, double y) :
+        x(x), y(y)
+    {
+    }
+    Point operator+(const Point& p) const
+    {
+        return Point(x + p.x, y + p.y);
+    }
+    Point operator-(const Point& p) const
+    {
+        return Point(x - p.x, y - p.y);
+    }
+    double operator*(const Point& p) const
+    {
+        return x * p.y - y * p.x;
+    }
+    double operator&(const Point& p) const
+    {
+        return x * p.x + y * p.y;
+    }
+    bool operator==(const Point& p) const
+    {
+        return sgn(x - p.x) == 0 && sgn(y - p.y) == 0;
+    }
+    bool operator!=(const Point& p) const
+    {
+        return sgn(x - p.x) || sgn(y - p.y);
+    }
+    Point operator*(const double& d) const
+    {
+        return Point(x * d, y * d);
+    }
+    Point operator/(const double& d) const
+    {
+        return Point(x / d, y / d);
+    }
+    double norm() const
+    {
+        return hypot(x, y);
+    }
+    Point rotate(double t) const
+    {
+        return Point(x * cos(t) - y * sin(t), x * sin(t) + y * cos(t));
+    }
+    bool operator<(const Point& p) const
+    {
+        if (dbcmp(y, p.y)) return y < p.y;
+        else return x < p.x;
+    }
+};
+int xmult(const Point& p1, const Point & p2, const Point& p)
+{
+    return sgn((p1 - p) * (p2 - p));
+}
+double Cross_Product(const Point &p1,const Point &p2)
+{
+    return p1.x*p2.y-p1.y*p2.x;
+}
+bool Better(const Point &p1,const Point &p2,const Point &p3)
+{   
+    double temp=Cross_Product(p2-p1,p3-p1);
+    if(temp>0)
+        return true;
+    if(temp==0)
+        return !(p3.x>=min(p1.x,p2.x) && p3.x<=max(p1.x,p2.x));
+    return false;
+}
+struct Line
+{
+    Point a, b;
+    double k, c; //k = dy/dx c = constant value)
+    Line()
+    {
+    }
+    Line(const Point& a, const Point& b) :
+        a(a), b(b)
+    {
+    }
+    bool operator<(const Line& l) const
+    {
+        if (dbcmp(k, l.k)) return k < l.k;
+        else return c < l.c;
+    }
+    void set()
+    {
+        k = atan2(a.y - b.y, a.x - b.x);
+        if (dbcmp(a.x, b.x)) c = (a * b) / fabs(a.x - b.x);
+        else c = (a * b) / fabs(a.y - b.y);
+    }
+};
+
+struct Circle
+{
+    Point o;
+    double r;
+    Circle()
+    {
+    }
+    Circle(const Point& o, const double& r) :
+        o(o), r(r)
+    {
+    }
+};
+
+typedef vector<Point> Points;
+typedef vector<Point> Polygon;
+
+//Lines
+//distance from point to line
+double Distance(const Point& p, const Line& l)
+{
+    return fabs((p - l.a) * (l.b - l.a)) / (l.b - l.a).norm();
+}
+//point on line
+bool on_line(const Point& p, const Line& l)
+{
+    return sgn((p - l.a) * (l.b - l.a)) == 0;
+}
+//Relation about point and line
+int relation(const Point& p, const Line& l)
+{
+    double rel = sgn((l.b - l.a) * (p - l.a));
+    if (rel == 0) return ONLINE;
+    else return rel > 0 ? LEFT : RIGHT;
+}
+//points in the same side of a line
+bool sameside(const Point& a, const Point& b, const Line& l)
+{
+    double m1 = (a - l.a) * (l.b - l.a);
+    double m2 = (b - l.a) * (l.b - l.a);
+    return sgn(m1 * m2) > 0;
+}
+//point on line
+bool on_seg(const Point& p, const Line& l)
+{
+    return on_line(p, l) && sgn((p.x - l.a.x) * (p.x - l.b.x)) <= 0
+            && sgn((p.y - l.a.y) * (p.y - l.b.y)) <= 0;
+}
+//Symmetry point from a line
+Point symPoint(const Point& p, const Line& l)
+{
+    Point ret;
+    double a = l.b.x - l.a.x;
+    double b = l.b.y - l.a.y;
+    double t = ((p.x - l.a.x) * a + (p.y - l.a.y) * b) / (sqr(a) + sqr(b));
+    ret.x = 2 * l.a.x + 2 * a * t - p.x;
+    ret.y = 2 * l.a.y + 2 * b * t - p.y;
+    return ret;
+}
+//line intersect
+bool line_ins(const Line& l1, const Line& l2)
+{
+    return sgn((l1.a - l1.b) * (l2.a - l2.b)) != 0;
+}
+//segment intersect
+bool seg_ins(const Line& l1, const Line& l2)
+{
+    if (on_seg(l1.a, l2) || on_seg(l1.b, l2)) return true;
+    if (on_seg(l2.a, l1) || on_seg(l2.b, l1)) return true;
+    return xmult(l1.b, l2.a, l1.a) * xmult(l1.b, l2.b, l1.a) < -eps
+        && xmult(l2.b, l1.a, l2.a) * xmult(l2.b, l1.b, l2.a) < -eps;
+}
+//intersection point
+Point ins_point(const Line& l1, const Line& l2)
+{
+    double u = (l1.b - l1.a) * (l2.a - l1.a);
+    double v = (l1.a - l1.b) * (l2.b - l1.b);
+    return (l2.a * v + l2.b * u) / (u + v);
+}
+//nearest point to line
+Point pointToLine(const Point& p, const Line& l)
+{
+    double a = l.b.x - l.a.x;
+    double b = l.b.y - l.a.y;
+    double t = ((p.x - l.a.x) * a + (p.y - l.a.y) * b) / (sqr(a) + sqr(b));
+    return l.a + Point(a, b) * t;
+}
+//nearest point to segment
+Point pointToSeg(const Point& p, const Line& l)
+{
+    double a = l.b.x - l.a.x;
+    double b = l.b.y - l.a.y;
+    double t = ((p.x - l.a.x) * a + (p.y - l.a.y) * b) / (sqr(a) + sqr(b));
+    if (sgn(t) >= 0 && dbcmp(t, 1) <= 0)
+    {
+        return l.a + Point(a, b) * t;
+    }
+    else if ((p - l.a).norm() < (p - l.b).norm())
+    {
+        return l.a;
+    }
+    else
+    {
+        return l.b;
+    }
+}
+//minimum distance between two segments
+double minDistance(const Line& l1, const Line& l2)
+{
+    double d1, d2, d3, d4;
+    if (seg_ins(l1, l2))
+    {
+        return 0;
+    }
+    else
+    {
+        d1 = (pointToSeg(l1.a, l2) - l1.a).norm();
+        d2 = (pointToSeg(l1.b, l2) - l1.b).norm();
+        d3 = (pointToSeg(l2.a, l1) - l2.a).norm();
+        d4 = (pointToSeg(l2.b, l1) - l2.b).norm();
+        return min(min(d1, d2), min(d3, d4));
+    }
+}
+double pp_distance(const Point & s1,const Point &s2)
+{
+    double ret=0.0;
+    ret=sqrt((s1.x-s2.x)*(s1.x-s2.x)+(s1.y-s2.y)*(s1.y-s2.y));
+    return ret;
+}
+bool cmb(const Point &A,const Point &B)
+{
+    if(A.y==B.y)
+        return A.x<B.x;
+    return A.y<B.y;
+}
+bool cmp(const Point &A,const Point &B)
+{
+    double xc=Cross_Product(A,B);
+    if(xc>0)
+        return A.x;
+}
+int main()
+{
+    
+}

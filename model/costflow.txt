@@ -1,0 +1,147 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <cctype>
+#include <vector>
+#include <stack>
+#include <queue>
+#include <map>
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <set>
+
+using namespace std;
+
+typedef long long LL;
+
+const int N = 50005;
+const int E = 1000005;
+
+struct Edge
+{
+    int st,en,cap,flow,cost,next;
+} edge[E];
+const int inf = 1000000000;
+int head[N] , now[N];
+int src,dest,node,nedge;
+int pre[N] , dis[N];
+queue<int> q;
+bool vs[N];
+
+void add_edge(int st,int en,int cap,int cost)
+{
+    edge[nedge].st=st;
+    edge[nedge].en=en;
+    edge[nedge].cap=cap;
+    edge[nedge].flow=0;
+    edge[nedge].cost=cost;
+    edge[nedge].next=head[st];
+    head[st]=nedge++;
+
+    edge[nedge].st=en;
+    edge[nedge].en=st;
+    edge[nedge].cap=0;
+    edge[nedge].flow=0;
+    edge[nedge].cost=-cost;
+    edge[nedge].next=head[en];
+    head[en]=nedge++;
+}
+
+bool SPFA()
+{
+    for(int i=0; i<node; i++)
+        dis[i]=inf,pre[i]=-1,vs[i]=0,now[i]=-1;
+    while(!q.empty()) q.pop();
+    q.push(src); dis[src]=0; vs[src]=1;
+    while(!q.empty())
+    {
+        int u=q.front(); q.pop(); vs[u]=0;
+        for(int i=head[u],v; i!=-1; i=edge[i].next)
+            if(edge[i].cap-edge[i].flow>0 && dis[v=edge[i].en]>dis[u]+edge[i].cost)
+            {
+                dis[v]=dis[u]+edge[i].cost;
+                now[v]=i;
+                if(!vs[v])
+                {
+                    vs[v]=1;
+                    q.push(v);
+                }
+            }
+    }
+    if(dis[dest]!=inf) return true;
+    else return false;
+}
+
+void MCMF(int& mflow,int& mcost)
+{
+    mflow=mcost=0;
+    while(SPFA())
+    {
+        int flow=inf;
+        for(int u=dest; u!=src; u=edge[now[u]].st)
+            if(flow>edge[now[u]].cap-edge[now[u]].flow)
+                flow=edge[now[u]].cap-edge[now[u]].flow;
+        for(int u=dest; u!=src; u=edge[now[u]].st)
+        {
+            edge[now[u]].flow+=flow;
+            edge[now[u]^1].flow-=flow;
+        }
+        mflow+=flow==inf?0:flow;
+        mcost+=flow*dis[dest];
+    }
+}
+
+void init(int _node,int _src,int _dest)
+{
+    node=_node;
+    src=_src;
+    dest=_dest;
+    nedge=0;
+    for(int i=0;i<node;i++)head[i]=-1;
+}
+
+
+int idx[40004];
+int oflow[40004];
+int main()
+{
+    int T;
+    scanf("%d",&T);
+    while(T--)
+    {
+        int n,m;
+        scanf("%d %d",&n,&m);
+        init(n+2,n,n+1);
+        int sum=0;
+        for(int i=0; i<m; i++)
+        {
+            int a,b,c,d;
+            scanf("%d%d%d%d",&a,&b,&c,&d);
+            a--,b--;
+            idx[i]=nedge;
+            oflow[i]=c;
+            sum+=c;
+            add_edge(a,b,d-c,1);
+            add_edge(src,b,c,1);
+            add_edge(a,dest,c,1);
+        }
+        int c1,c2;
+        MCMF(c1,c2);
+        if(c1==sum)
+        {
+            puts("YES");
+            for(int i=0; i<m; i++)
+            {
+                printf("%d\n",oflow[i]+ edge[idx[i]].flow);
+            }
+        }
+        else
+        {
+            puts("NO");
+        }
+        if(~T)puts("");
+    }
+    return 0;
+}
