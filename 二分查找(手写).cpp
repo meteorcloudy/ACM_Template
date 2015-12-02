@@ -13,7 +13,8 @@
 	二分查找下界（即查找第一个元素可插入的位置使序列仍然有序）：
 
 
-int a[] = {0, 1, 1 , 1, 1, 2};
+
+int a[] = {0, 1, 1, 1, 1, 2, 4};
 
 int  lower_bound(int *A,int l,int r,int x) {
 	int m;
@@ -35,10 +36,17 @@ int  upper_bound(int *A,int l,int r,int x) {
 
 int main() {
 	
-	cout << lower_bound(a, 0, 6, 0) << endl;   //  0
-	cout << upper_bound(a, 0, 6, 0) << endl;   //  1
-	cout << lower_bound(a, 0, 6, 1) << endl;   //  1 
-	cout << upper_bound(a, 0, 6, 1) << endl;   //  5
+	cout << lower_bound(a, 0, 7, 0) << endl;  // 0
+	cout << upper_bound(a, 0, 7, 0) << endl;  // 1
+	cout << lower_bound(a, 0, 7, 1) << endl;  // 1
+	cout << upper_bound(a, 0, 7, 1) << endl;  // 5
+        cout << lower_bound(a, 0, 7, 3) << endl;  // 6
+        cout << upper_bound(a, 0, 7, 3) << endl;  // 6
+        cout << lower_bound(a, 0, 7, -1) << endl;  // 0
+        cout << upper_bound(a, 0, 7, -1) << endl;  // 0
+        cout << lower_bound(a, 0, 7, 5) << endl;  // 7
+        cout << upper_bound(a, 0, 7, 5) << endl;  // 7
 }
+
 
 
